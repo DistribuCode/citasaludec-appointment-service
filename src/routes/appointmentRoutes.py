@@ -9,7 +9,7 @@ router = APIRouter()
 
 @router.get("/", tags=["Appointments"])
 async def get_appointments(credentials: HTTPAuthorizationCredentials = Security(security)):
-    verify_jwt(credentials)  # validamos JWT con tu misma lógica
+    verify_jwt(credentials)
     return await appointmentController.get_appointments()
 
 @router.post("/", tags=["Appointments"])
@@ -18,4 +18,5 @@ async def create_appointment(
     credentials: HTTPAuthorizationCredentials = Security(security)
 ):
     verify_jwt(credentials)
-    return await appointmentController.create_appointment(appointment.dict())
+    token = credentials.credentials  # ✅ Extrae el JWT correctamente
+    return await appointmentController.create_appointment(appointment.dict(), token)

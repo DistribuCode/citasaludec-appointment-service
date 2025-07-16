@@ -1,23 +1,16 @@
 from src.config.db import conn
 from src.utils.rabbitmq import publish_appointment_created
+from src.utils.availability_client import is_doctor_available
 
-async def get_appointments():
-    cur = conn.cursor()
-    cur.execute("SELECT id, patient, patient_name, disease, date FROM appointments")
-    rows = cur.fetchall()
-    cur.close()
-    return [
-        {
-            "id": r[0],
-            "patient": r[1],
-            "patient_name": r[2],
-            "disease": r[3],
-            "date": r[4]
-        }
-        for r in rows
-    ]
+async def create_appointment(data, token):  # Agregamos el token como parámetro
+    doctor_id = data["patient"]  # o usa otra clave si no es el paciente
 
-async def create_appointment(data):
+    # 🔍 1. Validar disponibilidad del doctor
+    disponible = await is_doctor_available(doctor_id, token)
+    if not disponible:
+        return {"error": "Doctor no disponible"}, 400
+
+    # ✅ 2. Guardar la cita si hay disponibilidad
     cur = conn.cursor()
     cur.execute(
         """
@@ -30,7 +23,7 @@ async def create_appointment(data):
     conn.commit()
     cur.close()
 
-    # 👉 Aquí publicamos el evento en RabbitMQ
+    # 📣 3. Emitir evento a RabbitMQ
     event_payload = {
         "id": new_id,
         "patient": data["patient"],
