@@ -2,6 +2,7 @@ from src.config.db import conn
 from src.utils.rabbitmq import publish_appointment_created
 from src.utils.availability_client import is_doctor_available
 
+# ✅ FUNCIÓN PARA CREAR UNA CITA
 async def create_appointment(data, token):  # Agregamos el token como parámetro
     doctor_id = data["patient"]  # o usa otra clave si no es el paciente
 
@@ -34,3 +35,22 @@ async def create_appointment(data, token):  # Agregamos el token como parámetro
     publish_appointment_created(event_payload)
 
     return {"message": "Appointment created", "id": new_id}
+
+# ✅ NUEVA FUNCIÓN PARA LISTAR CITAS
+async def get_appointments():
+    cur = conn.cursor()
+    cur.execute("SELECT id, patient, patient_name, disease, date FROM appointments")
+    rows = cur.fetchall()
+    cur.close()
+
+    citas = []
+    for row in rows:
+        citas.append({
+            "id": row[0],
+            "patient": row[1],
+            "patient_name": row[2],
+            "disease": row[3],
+            "date": str(row[4])  # convierte fecha a string para JSON
+        })
+
+    return citas
