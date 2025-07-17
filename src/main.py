@@ -3,6 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.openapi.utils import get_openapi
 from src.routes import appointmentRoutes
 from dotenv import load_dotenv
+import os
+print("🔐 JWT_SECRET cargado:", os.getenv("JWT_SECRET"))
+
+
 load_dotenv()
 
 app = FastAPI()
@@ -55,11 +59,3 @@ app.openapi = custom_openapi
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("src.main:app", host="0.0.0.0", port=4007, reload=True)
-
-
-from src.routes import appointmentRoutes, test_token
-
-# ...
-
-app.include_router(appointmentRoutes.router, prefix="/appointments")
-app.include_router(test_token.router)  # sin prefijo para acceder directo con /verify-token
