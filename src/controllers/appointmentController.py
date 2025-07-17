@@ -50,7 +50,7 @@ async def get_appointments():
             "patient": row[1],
             "patient_name": row[2],
             "disease": row[3],
-            "date": str(row[4])  # convierte fecha a string para JSON
+            "date": str(row[4])  
         })
 
     return citas
