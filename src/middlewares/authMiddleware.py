@@ -12,7 +12,8 @@ def verify_jwt(credentials: HTTPAuthorizationCredentials = Security(security)):
         payload = jwt.decode(
             token,
             os.getenv("JWT_SECRET"),
-            algorithms=["HS256"]
+            algorithms=["HS256"],
+            leeway=60  # Permite hasta 60 segundos de diferencia de reloj
         )
         print("✅ Token decoded:", payload)
         return payload

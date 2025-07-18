@@ -4,10 +4,17 @@ from fastapi.openapi.utils import get_openapi
 from src.routes import appointmentRoutes
 from dotenv import load_dotenv
 import os
-print("🔐 JWT_SECRET cargado:", os.getenv("JWT_SECRET"))
-
+import logging
 
 load_dotenv()
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# ✅ Esto se mostrará en los logs
+logger.info(f"🔐 JWT_SECRET cargado: {os.getenv('JWT_SECRET')}")
+
+print("🔐 JWT_SECRET cargado:", os.getenv("JWT_SECRET"))
 
 app = FastAPI()
 
