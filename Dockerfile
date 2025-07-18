@@ -5,8 +5,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --default-timeout=100 -r requirements.txt
 
-
-COPY .env .env   
+COPY . .
+#COPY .env .env   
 
 RUN chmod +x wait-for-it.sh
 
