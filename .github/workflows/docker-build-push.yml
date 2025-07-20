@@ -1,4 +1,4 @@
-name: Build and Push to Docker Hub - appointment-service
+name: Build and Deploy - appointment-service
 
 on:
   push:
@@ -28,3 +28,55 @@ jobs:
           context: .
           push: true
           tags: jeffri1997/appointment-service:qa
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔑 Decode EC2 SSH key
+        run: |
+          echo "${{ secrets.EC2_KEY }}" | base64 -d > auth-key.pem
+          chmod 600 auth-key.pem
+
+      - name: 🚀 Deploy appointment service to EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i auth-key.pem ec2-user@${{ secrets.EC2_HOST }} << 'EOF'
+            # Crear red si no existe
+            docker network inspect my_network >/dev/null 2>&1 || docker network create my_network
+
+            # Iniciar la base de datos si no está corriendo
+            docker stop appointment-db || true
+            docker rm appointment-db || true
+            docker run -d \
+              --name appointment-db \
+              --network my_network \
+              -e POSTGRES_DB=appointment_db \
+              -e POSTGRES_USER=postgres \
+              -e POSTGRES_PASSWORD=mysecretpassword \
+              -v appointment_data:/var/lib/postgresql/data \
+              postgres:15
+
+            # Esperar a que la base de datos esté lista
+            sleep 15
+
+            # Iniciar el servicio appointment-service
+            docker pull jeffri1997/appointment-service:qa
+            docker stop appointment-service || true
+            docker rm appointment-service || true
+            docker run -d \
+              --name appointment-service \
+              --network my_network \
+              -p 4007:4007 \
+              -e PORT=4007 \
+              -e DB_HOST=appointment-db \
+              -e DB_PORT=5432 \
+              -e DB_USER=postgres \
+              -e DB_PASSWORD=mysecretpassword \
+              -e DB_NAME=appointment_db \
+              -e JWT_SECRET=supersecretkey \
+              jeffri1997/appointment-service:qa
+          EOF
